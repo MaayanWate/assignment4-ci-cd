@@ -20,5 +20,5 @@ EXPOSE 8000
 CMD ["python", "app.py"]
 
 # Set an environment variable for the port
-ENV PORT=5001
+ENV PORT=8000
 
