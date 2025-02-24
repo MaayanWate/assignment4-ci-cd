@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 # Base URL for stocks service (only one instance now)
-STOCKS_URL = os.getenv("STOCKS_URL", "http://stocks1:5001")
+STOCKS_URL = os.getenv("STOCKS_URL", "http://stocks1:8000")
 
 # Function to fetch stocks from the service
 def fetch_stocks(filters=None):
