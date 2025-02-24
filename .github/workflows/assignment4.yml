@@ -121,7 +121,7 @@ jobs:
       - name: Wait for Stocks Service to be Ready
         run: |
           echo "Waiting for stocks service to be available..."
-          timeout 60 bash -c 'until curl -s "http://localhost:5001/stocks" > /dev/null; do echo "Still waiting..."; sleep 3; done' || (echo "Stocks service failed to start" && exit 1)
+          timeout 60 bash -c 'until curl -s "http://localhost:8000/stocks" > /dev/null; do echo "Still waiting..."; sleep 3; done' || (echo "Stocks service failed to start" && exit 1)
           echo "Stocks service is ready!"
 
       - name: Ensure query.txt exists
@@ -148,7 +148,7 @@ jobs:
 
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
-            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d "$stock")
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:8000/stocks" -H "Content-Type: application/json" -d "$stock")
             if [ "$response" -ne 201 ]; then
               echo "Failed to add stock: $stock (HTTP $response)"
               exit 1
@@ -163,9 +163,9 @@ jobs:
             query=$(echo "$line" | cut -d':' -f2-)
 
             if [ "$service" = "stocks" ]; then
-              response=$(curl -s "http://localhost:5001/stocks?$query")
+              response=$(curl -s "http://localhost:8000/stocks?$query")
             elif [ "$service" = "capital-gains" ]; then
-              response=$(curl -s "http://localhost:5003/capital-gains?$query")
+              response=$(curl -s "http://localhost:8080/capital-gains?$query")
             else
               response="Invalid service name"
             fi
