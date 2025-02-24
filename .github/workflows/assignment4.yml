@@ -18,43 +18,23 @@ jobs:
         run: | 
           echo "Submitters: Maayan Wate, May Bouarshan" >> log.txt
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Install Docker & Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
 
-      - name: Build and export stock-portfolio service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./stock-portfolio
-          file: ./stock-portfolio/Dockerfile
-          tags: stock-portfolio:latest
-          outputs: type=docker,dest=/tmp/stock_portfolio_image.tar
+      - name: Build and Start Containers
+        run: docker-compose up --build -d
 
-      - name: Build and export capital-gains service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./capital-gains
-          file: ./capital-gains/Dockerfile
-          tags: capital-gains:latest
-          outputs: type=docker,dest=/tmp/capital_gains_image.tar
-
-      - name: Log build failure
-        if: failure()
-        run: echo "image not able to be built" >> log.txt
+      - name: Check running containers
+        run: docker ps -a
 
       - name: Log build success
-        if: success()
         run: echo "image successfully built" >> log.txt
 
-      - name: Upload Docker images
-        uses: actions/upload-artifact@v4
-        with:
-          name: images
-          path: |
-            /tmp/stock_portfolio_image.tar
-            /tmp/capital_gains_image.tar
-
       - name: Upload log file
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: log-file
@@ -67,51 +47,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download and load Docker images
-        uses: actions/download-artifact@v4
-        with:
-          name: images
-          path: /tmp
-
-      - name: Download log file from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: log-file
-          path: .
-
-      - name: Verify downloaded images
-        run: ls -l /tmp
-
-      - name: Load Docker images
+      - name: Install Docker & Docker Compose
         run: |
-          docker load --input /tmp/stock_portfolio_image.tar
-          docker load --input /tmp/capital_gains_image.tar
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
 
-      - name: Check loaded images
-        run: docker image ls
+      - name: Start application
+        run: docker-compose up -d
 
-      - name: Start application with Docker Compose
-        run: docker compose -f ./docker-compose.yml up -d
+      - name: Wait for services to be ready
+        run: sleep 10
 
-      - name: Log container status
-        run: |
-          if [ $(docker ps -q | wc -l) -gt 0 ]; then
-            echo "Container up and running" >> log.txt
-          else
-            echo "Container failed to run" >> log.txt
-          fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: | 
-          python -m pip install --upgrade pip
-          pip install pytest requests
-
-      - name: Run tests with pytest
+      - name: Run tests
         run: pytest -v tests/assn4_tests.py | tee test_results.txt
 
       - name: Upload test results
@@ -138,7 +87,7 @@ jobs:
           overwrite: true
 
       - name: Shut down Docker Compose
-        run: docker compose -f ./docker-compose.yml down
+        run: docker-compose down
 
   query:
     needs: test
@@ -147,8 +96,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Docker & Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
+
       - name: Start application
-        run: docker compose -f ./docker-compose.yml up -d
+        run: docker-compose up -d
 
       - name: Wait for services to be ready
         run: sleep 10
@@ -179,4 +135,4 @@ jobs:
           path: response.txt
 
       - name: Shut down Docker Compose
-        run: docker compose -f ./docker-compose.yml down
+        run: docker-compose down
