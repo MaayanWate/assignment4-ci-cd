@@ -21,20 +21,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and export stocks-service
+      - name: Build and export stock-portfolio service
         uses: docker/build-push-action@v5
         with:
-          context: ./stocks
-          file: ./stocks/Dockerfile
-          tags: stocks-service:latest
-          outputs: type=docker,dest=/tmp/stocks_image.tar
+          context: ./stock-portfolio
+          file: ./stock-portfolio/Dockerfile
+          tags: stock-portfolio:latest
+          outputs: type=docker,dest=/tmp/stock_portfolio_image.tar
 
-      - name: Build and export capital-gains-service
+      - name: Build and export capital-gains service
         uses: docker/build-push-action@v5
         with:
-          context: ./capital_gains
-          file: ./capital_gains/Dockerfile
-          tags: capital-gains-service:latest
+          context: ./capital-gains
+          file: ./capital-gains/Dockerfile
+          tags: capital-gains:latest
           outputs: type=docker,dest=/tmp/capital_gains_image.tar
 
       - name: Log build failure
@@ -50,7 +50,7 @@ jobs:
         with:
           name: images
           path: |
-            /tmp/stocks_image.tar
+            /tmp/stock_portfolio_image.tar
             /tmp/capital_gains_image.tar
 
       - name: Upload log file
@@ -84,7 +84,7 @@ jobs:
 
       - name: Load Docker images
         run: |
-          docker load --input /tmp/stocks_image.tar
+          docker load --input /tmp/stock_portfolio_image.tar
           docker load --input /tmp/capital_gains_image.tar
 
       - name: Check loaded images
