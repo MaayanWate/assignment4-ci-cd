@@ -112,8 +112,23 @@ jobs:
       - name: Start application
         run: docker-compose up -d
 
-      - name: Wait for services to be ready
-        run: sleep 10
+      - name: Wait for MongoDB to be Ready
+        run: |
+          echo "Waiting for MongoDB to be available..."
+          while ! nc -z localhost 27017; do
+            echo "Still waiting for MongoDB..."
+            sleep 3
+          done
+          echo "MongoDB is ready!"
+
+      - name: Wait for Stocks Service to be Ready
+        run: |
+          echo "Waiting for stocks service to be available..."
+          while ! curl -s "http://localhost:5001/stocks" > /dev/null; do
+            echo "Still waiting for stocks service..."
+            sleep 3
+          done
+          echo "Stocks service is ready!"
 
       - name: Ensure query.txt exists
         run: |
@@ -123,11 +138,12 @@ jobs:
 
       - name: Ensure response.txt exists
         run: |
-          rm -f response.txt  # מוחק קובץ קודם אם קיים
-          touch response.txt   # יוצר קובץ חדש נקי
+          rm -f response.txt
+          touch response.txt
 
       - name: Add 6 stock entries before queries
         run: |
+          echo "Adding test stocks..."
           curl -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d '{"name":"NVIDIA Corporation", "symbol":"NVDA", "purchase price":134.66, "purchase date":"18-06-2024", "shares":7}'
           curl -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d '{"name":"Apple Inc.", "symbol":"AAPL", "purchase price":183.63, "purchase date":"22-02-2024", "shares":19}'
           curl -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d '{"name":"Alphabet Inc.", "symbol":"GOOG", "purchase price":140.12, "purchase date":"24-10-2024", "shares":14}'
