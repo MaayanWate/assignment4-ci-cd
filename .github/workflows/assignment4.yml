@@ -1,0 +1,138 @@
+name: assignment4
+
+on:
+  workflow_dispatch:  # הפעלה ידנית דרך GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log Start Time
+        run: |
+          echo "Start time: $(date -Iminutes)" > log.txt
+
+      - name: Add submitter name
+        run: | 
+          echo "Submitters: Maayan Wate, May Bouarshan" >> log.txt
+
+      - name: Install Docker & Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
+
+      - name: Build and Start Containers
+        run: docker-compose up --build -d
+
+      - name: Check running containers
+        run: docker ps -a
+
+      - name: Log build success
+        run: echo "image successfully built" >> log.txt
+
+      - name: Upload log file
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-file
+          path: log.txt
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Docker & Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
+
+      - name: Start application
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 10
+
+      - name: Run tests
+        run: pytest -v tests/assn4_tests.py | tee test_results.txt
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_results
+          path: test_results.txt
+
+      - name: Update log file
+        run: |
+          if grep -q "FAILED" test_results.txt; then
+            echo "tests failed" >> log.txt
+          else
+            echo "tests succeeded" >> log.txt
+          fi
+
+      - name: Upload updated log file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-file
+          path: log.txt
+          overwrite: true
+
+      - name: Shut down Docker Compose
+        run: docker-compose down
+
+  query:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Docker & Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          docker --version
+          docker-compose --version
+
+      - name: Start application
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 10
+
+      - name: Execute queries from query.txt
+        run: |
+          touch response.txt
+          while IFS= read -r line; do
+            service=$(echo "$line" | cut -d':' -f1)
+            query=$(echo "$line" | cut -d':' -f2-)
+            
+            if [ "$service" = "stocks" ]; then
+              response=$(curl -s "http://localhost:5001/stocks?$query")
+            elif [ "$service" = "capital-gains" ]; then
+              response=$(curl -s "http://localhost:5003/capital-gains?$query")
+            else
+              response="Invalid service name"
+            fi
+
+            echo "query: $line" >> response.txt
+            echo "response: $response" >> response.txt
+          done < query.txt
+
+      - name: Upload query results
+        uses: actions/upload-artifact@v4
+        with:
+          name: query-results
+          path: response.txt
+
+      - name: Shut down Docker Compose
+        run: docker-compose down
