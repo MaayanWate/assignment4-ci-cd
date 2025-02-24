@@ -1,8 +1,11 @@
-query: stocks:symbol=NVDA
-response: {"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}
-
 query: stocks:symbol=AAPL
-response: {"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}
+response: {"symbol":"AAPL","name":"Apple Inc.","purchase price":150.5,"purchase date":"2024-01-01","shares":10}
 
-query: capital-gains:year=2024
-response: {"year":2024,"gains":1500.45}
+query: stocks:symbol=NVDA
+response: {"symbol":"NVDA","name":"NVIDIA Corporation","purchase price":134.66,"purchase date":"18-06-2024","shares":7}
+
+query: capital-gains:total_gains
+response: {"total_gains": 5000.75}
+
+query: capital-gains:numsharesgt=5
+response: {"details": [{"symbol":"AAPL", "shares":10}, {"symbol":"NVDA", "shares":7}]}
