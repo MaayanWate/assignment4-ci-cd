@@ -82,5 +82,5 @@ def kill_container():
     os._exit(1)
 
 if __name__ == "__main__":
-    port = os.getenv("PORT", 5003)
+    port = os.getenv("PORT", 8080)
     app.run(host="0.0.0.0", port=port, debug=True)
