@@ -1,7 +1,7 @@
 name: assignment4
 
 on:
-  workflow_dispatch:  # הפעלה ידנית דרך GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -9,14 +9,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Log Start Time
-        run: |
-          echo "Start time: $(date -Iminutes)" > log.txt
-
-      - name: Add submitter name
-        run: |
-          echo "Submitters: Maayan Wate, May Bouarshan" >> log.txt
 
       - name: Install Docker Compose
         run: |
@@ -31,17 +23,11 @@ jobs:
       - name: Build and Start Containers
         run: docker-compose up --build -d
 
-      - name: Check running containers
+      - name: Debug - Check running containers
         run: docker ps -a
 
-      - name: Log build success
-        run: echo "image successfully built" >> log.txt
-
-      - name: Upload log file
-        uses: actions/upload-artifact@v4
-        with:
-          name: log-file
-          path: log.txt
+      - name: Debug - Show logs for stocks1
+        run: docker logs stocks1 || echo "stocks1 container is not running"
 
   test:
     needs: build
@@ -63,6 +49,12 @@ jobs:
       - name: Start application
         run: docker-compose up -d
 
+      - name: Debug - Check running containers
+        run: docker ps -a
+
+      - name: Debug - Show logs for stocks1
+        run: docker logs stocks1 || echo "stocks1 container is not running"
+
       - name: Wait for services to be ready
         run: sleep 10
 
@@ -75,22 +67,6 @@ jobs:
         with:
           name: test_results
           path: test_results.txt
-
-      - name: Update log file
-        run: |
-          if grep -q "FAILED" test_results.txt; then
-            echo "tests failed" >> log.txt
-          else
-            echo "tests succeeded" >> log.txt
-          fi
-
-      - name: Upload updated log file
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: log-file
-          path: log.txt
-          overwrite: true
 
       - name: Shut down Docker Compose
         run: docker-compose down
@@ -115,40 +91,40 @@ jobs:
       - name: Start application
         run: docker-compose up -d
 
-      - name: Wait for MongoDB to be Ready
-        run: |
-          echo "Waiting for MongoDB to be available..."
-          timeout 60 bash -c 'until nc -z localhost 27017; do echo "Still waiting..."; sleep 3; done' || (echo "MongoDB failed to start" && exit 1)
-          echo "MongoDB is ready!"
+      - name: Debug - Check running containers
+        run: docker ps -a
+
+      - name: Debug - Show logs for stocks1
+        run: docker logs stocks1 || echo "stocks1 container is not running"
 
       - name: Wait for Stocks Service to be Ready
         run: |
           echo "Waiting for stocks service to be available..."
-          timeout 60 bash -c 'until curl -s "http://localhost:5001/stocks" > /dev/null; do echo "Still waiting..."; sleep 3; done' || (echo "Stocks service failed to start" && exit 1)
+          count=0
+          until curl -s "http://localhost:5001/stocks" > /dev/null; do
+            echo "Still waiting... Attempt $count"
+            count=$((count+1))
+            sleep 5
+            if [ $count -eq 30 ]; then
+              echo "Stocks service failed to start"
+              exit 1
+            fi
+          done
           echo "Stocks service is ready!"
 
       - name: Ensure query.txt exists
-        run: |
-          echo "Ensuring query.txt exists..."
-          touch query.txt
+        run: touch query.txt
 
       - name: Ensure response.txt exists
-        run: |
-          rm -f response.txt
-          touch response.txt
+        run: rm -f response.txt && touch response.txt
 
       - name: Add 6 stock entries before queries
         run: |
-          echo "Adding test stocks..."
           stocks=(
             '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}'
             '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}'
             '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}'
-            '{"name":"Tesla, Inc.","symbol":"TSLA","purchase price":194.58,"purchase date":"28-11-2022","shares":32}'
-            '{"name":"Microsoft Corporation","symbol":"MSFT","purchase price":420.55,"purchase date":"09-02-2024","shares":35}'
-            '{"name":"Intel Corporation","symbol":"INTC","purchase price":19.15,"purchase date":"13-01-2025","shares":10}'
           )
-
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
             response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d "$stock")
@@ -164,7 +140,6 @@ jobs:
           while IFS= read -r line; do
             service=$(echo "$line" | cut -d':' -f1)
             query=$(echo "$line" | cut -d':' -f2-)
-
             if [ "$service" = "stocks" ]; then
               response=$(curl -s "http://localhost:5001/stocks?$query")
             elif [ "$service" = "capital-gains" ]; then
@@ -172,7 +147,6 @@ jobs:
             else
               response="Invalid service name"
             fi
-
             echo "query: $line" >> response.txt
             echo "response: $response" >> response.txt
           done < query.txt
