@@ -115,26 +115,19 @@ jobs:
       - name: Wait for MongoDB to be Ready
         run: |
           echo "Waiting for MongoDB to be available..."
-          while ! nc -z localhost 27017; do
-            echo "Still waiting for MongoDB..."
-            sleep 3
-          done
+          timeout 60 bash -c 'until nc -z localhost 27017; do echo "Still waiting..."; sleep 3; done' || (echo "MongoDB failed to start" && exit 1)
           echo "MongoDB is ready!"
 
       - name: Wait for Stocks Service to be Ready
         run: |
           echo "Waiting for stocks service to be available..."
-          until curl -s "http://localhost:5001/stocks" > /dev/null; do
-            echo "Still waiting for stocks service..."
-            sleep 3
-          done
+          timeout 60 bash -c 'until curl -s "http://localhost:5001/stocks" > /dev/null; do echo "Still waiting..."; sleep 3; done' || (echo "Stocks service failed to start" && exit 1)
           echo "Stocks service is ready!"
 
       - name: Ensure query.txt exists
         run: |
-          if [ ! -f query.txt ]; then
-            echo "query.txt is missing! Creating a placeholder." > query.txt
-          fi
+          echo "Ensuring query.txt exists..."
+          touch query.txt
 
       - name: Ensure response.txt exists
         run: |
@@ -144,13 +137,22 @@ jobs:
       - name: Add 6 stock entries before queries
         run: |
           echo "Adding test stocks..."
-          for stock in '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}' \
-                       '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}' \
-                       '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}' \
-                       '{"name":"Tesla, Inc.","symbol":"TSLA","purchase price":194.58,"purchase date":"28-11-2022","shares":32}' \
-                       '{"name":"Microsoft Corporation","symbol":"MSFT","purchase price":420.55,"purchase date":"09-02-2024","shares":35}' \
-                       '{"name":"Intel Corporation","symbol":"INTC","purchase price":19.15,"purchase date":"13-01-2025","shares":10}'; do
-            curl -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d "$stock" || echo "Failed to add stock: $stock"
+          stocks=(
+            '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}'
+            '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}'
+            '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}'
+            '{"name":"Tesla, Inc.","symbol":"TSLA","purchase price":194.58,"purchase date":"28-11-2022","shares":32}'
+            '{"name":"Microsoft Corporation","symbol":"MSFT","purchase price":420.55,"purchase date":"09-02-2024","shares":35}'
+            '{"name":"Intel Corporation","symbol":"INTC","purchase price":19.15,"purchase date":"13-01-2025","shares":10}'
+          )
+
+          for stock in "${stocks[@]}"; do
+            echo "Posting: $stock"
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:5001/stocks" -H "Content-Type: application/json" -d "$stock")
+            if [ "$response" -ne 201 ]; then
+              echo "Failed to add stock: $stock (HTTP $response)"
+              exit 1
+            fi
             sleep 1
           done
 
