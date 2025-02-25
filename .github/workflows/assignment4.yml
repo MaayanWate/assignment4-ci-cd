@@ -43,11 +43,11 @@ jobs:
               echo "image not able to be built" >> log.txt
           fi
 
-      - name: Upload Build Log File
+      - name: Upload Build Log File (Intermediate)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logfile_build
+          name: temp_logfile
           path: log.txt
 
   test:
@@ -60,7 +60,7 @@ jobs:
       - name: Download Build Log File
         uses: actions/download-artifact@v4
         with:
-          name: logfile_build
+          name: temp_logfile
           path: .
 
       - name: Install Docker Compose
@@ -114,10 +114,10 @@ jobs:
             echo "tests succeeded" >> log.txt
           fi
 
-      - name: Upload Updated Log File
+      - name: Upload Updated Log File (Intermediate)
         uses: actions/upload-artifact@v4
         with:
-          name: logfile_test
+          name: temp_logfile
           path: log.txt
 
   query:
@@ -130,7 +130,7 @@ jobs:
       - name: Download Log File
         uses: actions/download-artifact@v4
         with:
-          name: logfile_test
+          name: temp_logfile
           path: .
 
       - name: Install Docker Compose
@@ -218,5 +218,5 @@ jobs:
       - name: Upload Final Log File
         uses: actions/upload-artifact@v4
         with:
-          name: logfile_final
+          name: log.txt
           path: log.txt
