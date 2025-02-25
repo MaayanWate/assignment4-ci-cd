@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build:
+    name: Build Docker Images
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Install Docker Compose
@@ -20,7 +22,12 @@ jobs:
           docker --version
           docker-compose --version
 
-      - name: Build and Start Containers
+      - name: Build Docker Images
+        run: |
+          docker build -t stocks-service -f ./stock-portfolio/Dockerfile .
+          docker build -t capital-gains-service -f ./capital-gains/Dockerfile .
+
+      - name: Start Containers
         run: docker-compose up --build -d
 
       - name: Debug - Check running containers
@@ -30,100 +37,72 @@ jobs:
         run: docker logs stocks1 || echo "stocks1 container is not running"
 
   test:
-    needs: build
+    name: Run Pytest Tests
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl
-          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-          docker --version
-          docker-compose --version
-
-      - name: Start application
+      - name: Start Containers
         run: docker-compose up -d
 
-      - name: Debug - Check running containers
-        run: docker ps -a
-
-      - name: Debug - Show logs for stocks1
-        run: docker logs stocks1 || echo "stocks1 container is not running"
-
-      - name: Wait for services to be ready
+      - name: Wait for Services to Start
         run: sleep 10
 
-      - name: Run tests
+      - name: Run Tests
         run: pytest -v tests/assn4_tests.py | tee test_results.txt
 
-      - name: Upload test results
-        if: always()
+      - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test_results
           path: test_results.txt
 
-      - name: Shut down Docker Compose
+      - name: Shut Down Containers
         run: docker-compose down
 
   query:
-    needs: test
+    name: Run Query Tests
     runs-on: ubuntu-latest
+    needs: test
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl
-          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-          docker --version
-          docker-compose --version
-
-      - name: Start application
+      - name: Start Containers
         run: docker-compose up -d
-
-      - name: Debug - Check running containers
-        run: docker ps -a
-
-      - name: Debug - Show logs for stocks1
-        run: docker logs stocks1 || echo "stocks1 container is not running"
 
       - name: Wait for Stocks Service to be Ready
         run: |
           echo "Waiting for stocks service to be available..."
           count=0
-          until curl -s "http://localhost:5001/stocks" > /dev/null; do
+          until curl -s -o /dev/null -w "%{http_code}" "http://localhost:5001/stocks"; do
             echo "Still waiting... Attempt $count"
             count=$((count+1))
             sleep 5
             if [ $count -eq 30 ]; then
               echo "Stocks service failed to start"
+              docker logs stocks1 || echo "stocks1 container is not running"
               exit 1
             fi
           done
           echo "Stocks service is ready!"
 
-      - name: Ensure query.txt exists
-        run: touch query.txt
+      - name: Ensure Query Files Exist
+        run: |
+          touch query.txt
+          rm -f response.txt && touch response.txt
 
-      - name: Ensure response.txt exists
-        run: rm -f response.txt && touch response.txt
-
-      - name: Add 6 stock entries before queries
+      - name: Add 6 Stock Entries
         run: |
           stocks=(
             '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}'
             '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}'
             '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}'
+            '{"name":"Tesla, Inc.","symbol":"TSLA","purchase price":194.58,"purchase date":"28-11-2022","shares":32}'
+            '{"name":"Microsoft Corporation","symbol":"MSFT","purchase price":420.55,"purchase date":"09-02-2024","shares":35}'
+            '{"name":"Intel Corporation","symbol":"INTC","purchase price":19.15,"purchase date":"13-01-2025","shares":10}'
           )
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
@@ -135,27 +114,25 @@ jobs:
             sleep 1
           done
 
-      - name: Execute queries from query.txt
+      - name: Execute Queries from query.txt
         run: |
           while IFS= read -r line; do
             service=$(echo "$line" | cut -d':' -f1)
             query=$(echo "$line" | cut -d':' -f2-)
-            if [ "$service" = "stocks" ]; then
-              response=$(curl -s "http://localhost:5001/stocks?$query")
-            elif [ "$service" = "capital-gains" ]; then
-              response=$(curl -s "http://localhost:5003/capital-gains?$query")
-            else
-              response="Invalid service name"
+            echo "query: ${service}:${query}" >> response.txt
+            echo "response:" >> response.txt
+            if [[ "$service" == "stocks" ]]; then
+              curl -s "http://localhost:5001/stocks?$query" >> response.txt
+            elif [[ "$service" == "capital-gains" ]]; then
+              curl -s "http://localhost:5003/capital-gains?$query" >> response.txt
             fi
-            echo "query: $line" >> response.txt
-            echo "response: $response" >> response.txt
           done < query.txt
 
-      - name: Upload query results
+      - name: Upload Query Results
         uses: actions/upload-artifact@v4
         with:
           name: query-results
           path: response.txt
 
-      - name: Shut down Docker Compose
+      - name: Shut Down Containers
         run: docker-compose down
