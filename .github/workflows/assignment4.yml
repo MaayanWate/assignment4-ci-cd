@@ -114,10 +114,10 @@ jobs:
             echo "tests succeeded" >> log.txt
           fi
 
-      - name: Upload Updated Log File (Intermediate)
+      - name: Upload Final Log File
         uses: actions/upload-artifact@v4
         with:
-          name: temp_logfile_test
+          name: log.txt
           path: log.txt
 
   query:
@@ -126,11 +126,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Download Log File
+      
+      - name: Download Final Log File
         uses: actions/download-artifact@v4
         with:
-          name: temp_logfile_test
+          name: log.txt
           path: .
 
       - name: Install Docker Compose
@@ -214,10 +214,3 @@ jobs:
 
       - name: Shut down Docker Compose
         run: docker-compose down
-
-      - name: Upload Final Log File
-        uses: actions/upload-artifact@v4
-        with:
-          # Upload final artifact with a unique name so there's no conflict.
-          name: final_logfile
-          path: log.txt
