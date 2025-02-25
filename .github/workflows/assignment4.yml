@@ -35,19 +35,25 @@ jobs:
       - name: Debug - Show logs for stocks1
         run: docker logs stocks1 || echo "stocks1 container is not running"
 
-      - name: Log Build Result
+      - name: Build Docker Images and Check Build Success
         run: |
-          if docker images | grep -q "stock-portfolio" && docker images | grep -q "capital-gains"; then
-            echo "image successfully built" >> log.txt
+          set +e
+          docker build -t stock-portofilio -f ./stock-portofilio/Dockerfile .
+          EXIT1=$?
+          docker build -t capital-gains -f ./capital-gains/Dockerfile .
+          EXIT2=$?
+          if [ $EXIT1 -eq 0 ] && [ $EXIT2 -eq 0 ]; then
+              echo "image successfully built" >> log.txt
           else
-            echo "image not able to be built" >> log.txt
+              echo "image not able to be built" >> log.txt
           fi
+          set -e
 
       - name: Upload Build Log File
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: temp_logfile
+          name: logfile_build
           path: log.txt
 
 
@@ -61,7 +67,7 @@ jobs:
       - name: Download Build Log File
         uses: actions/download-artifact@v4
         with:
-          name: temp_logfile
+          name: logfile_build
           path: .
 
       - name: Install Docker Compose
@@ -118,7 +124,7 @@ jobs:
       - name: Upload Updated Log File
         uses: actions/upload-artifact@v4
         with:
-          name: logfile
+          name: logfile_test
           path: log.txt
 
   query:
@@ -128,7 +134,7 @@ jobs:
       - name: Download Log File
         uses: actions/download-artifact@v4
         with:
-          name: logfile
+          name: logfile_test
           path: .
 
       - name: Checkout repository
@@ -215,9 +221,9 @@ jobs:
 
       - name: Shut down Docker Compose
         run: docker-compose down
-        
+
       - name: Upload Final Log File
         uses: actions/upload-artifact@v4
         with:
-          name: logfile
+          name: logfile_final
           path: log.txt
