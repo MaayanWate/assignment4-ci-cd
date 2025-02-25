@@ -94,21 +94,21 @@ jobs:
         run: sleep 10
 
       - name: Run tests
-        run: pytest -v tests/assn4_tests.py | tee test_results.txt
+        run: pytest -v tests/assn4_tests.py | tee assn4_test_results.txt
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test_results
-          path: test_results.txt
+          name: assn4_test_results
+          path: assn4_test_results.txt
 
       - name: Shut down Docker Compose
         run: docker-compose down
 
       - name: Append Test Results to Log
         run: |
-          if grep -q "failed" test_results.txt; then
+          if grep -q "failed" assn4_test_results.txt; then
             echo "tests failed" >> log.txt
           else
             echo "tests succeeded" >> log.txt
