@@ -39,10 +39,21 @@ jobs:
             echo "image not able to be built" >> log.txt
           fi
 
+      - name: Upload Log File (Build Stage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-file
+          path: log.txt
+
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Download Log File
+        uses: actions/download-artifact@v4
+        with:
+          name: log-file
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -96,11 +107,22 @@ jobs:
           else
             echo "tests succeeded" >> log.txt
           fi
+      
+      - name: Upload Updated Log File (Test Stage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-file
+          path: log.txt
 
   query:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Download Log File
+        uses: actions/download-artifact@v4
+        with:
+          name: log-file
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -186,7 +208,7 @@ jobs:
       - name: Shut down Docker Compose
         run: docker-compose down
 
-      - name: Upload Log File
+      - name: Upload Final Log File
         uses: actions/upload-artifact@v4
         with:
           name: log-file
