@@ -7,6 +7,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Create and Initialize Log File
+        run: |
+          touch log.txt
+          echo "$(date -Iminutes)" > log.txt
+          echo "Maayan Wate and May Bouarshan" >> log.txt
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -31,29 +37,19 @@ jobs:
 
       - name: Log Build Result
         run: |
-          echo "$(date -Iminutes)" > log.txt
-          echo "Maayan Wate and May Bouarshan" >> log.txt
-          if docker images | grep -q "stocks" && docker images | grep -q "capital-gains"; then
+          if docker images | grep -q "stock-portfolio" && docker images | grep -q "capital-gains"; then
             echo "image successfully built" >> log.txt
           else
             echo "image not able to be built" >> log.txt
           fi
 
-      - name: Initialize Log File
-        run: |
-          echo "$(date -Iminutes)" > log.txt
-          echo "Maayan Wate" >> log.txt
-          if docker images | grep -q "stocks" && docker images | grep -q "capital-gains"; then
-            echo "image successfully built" >> log.txt
-          else
-            echo "image not able to be built" >> log.txt
-          fi
-
-      - name: Upload Log File (Build Stage)
+      - name: Upload Build Log File
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: log-file
+          name: temp_logfile
           path: log.txt
+
 
   test:
     needs: build
@@ -95,20 +91,6 @@ jobs:
       - name: Run tests
         run: pytest -v tests/assn4_tests.py | tee test_results.txt
 
-      - name: Append Test Results to Log
-        run: |
-          if grep -q "failed" test_results.txt; then
-            echo "tests failed" >> log.txt
-          else
-            echo "tests succeeded" >> log.txt
-          fi
-
-      - name: Upload Updated Log File (Test Stage)
-        uses: actions/upload-artifact@v4
-        with:
-          name: log-file
-          path: log.txt
-
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,24 +101,10 @@ jobs:
       - name: Shut down Docker Compose
         run: docker-compose down
 
-      - name: Log Test Results
-        run: |
-          if grep -q "failed" test_results.txt; then
-            echo "tests failed" >> log.txt
-          else
-            echo "tests succeeded" >> log.txt
-          fi
-      
-
   query:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Download Log File
-        uses: actions/download-artifact@v4
-        with:
-         name: log-file
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -221,9 +189,3 @@ jobs:
 
       - name: Shut down Docker Compose
         run: docker-compose down
-
-      - name: Upload Final Log File
-        uses: actions/upload-artifact@v4
-        with:
-          name: log-file
-          path: log.txt
