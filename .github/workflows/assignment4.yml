@@ -7,14 +7,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Create and Initialize Log File
         run: |
           touch log.txt
           echo "$(date -Iminutes)" > log.txt
           echo "Maayan Wate and May Bouarshan" >> log.txt
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Install Docker Compose
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: Build Docker Images and Check Build Success
         run: |
           set +e
-          docker build -t stock-portofilio -f ./stock-portofilio/Dockerfile .
+          docker build -t stock-portfolio -f ./stock-portfolio/Dockerfile .
           EXIT1=$?
           docker build -t capital-gains -f ./capital-gains/Dockerfile .
           EXIT2=$?
@@ -131,14 +131,14 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
       - name: Download Log File
         uses: actions/download-artifact@v4
         with:
           name: logfile_test
           path: .
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Install Docker Compose
         run: |
