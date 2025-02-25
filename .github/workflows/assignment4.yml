@@ -58,6 +58,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download Build Log File
+        uses: actions/download-artifact@v4
+        with:
+          name: temp_logfile
+          path: .
+
       - name: Install Docker Compose
         run: |
           sudo apt-get update
@@ -101,10 +107,30 @@ jobs:
       - name: Shut down Docker Compose
         run: docker-compose down
 
+      - name: Append Test Results to Log
+        run: |
+          if grep -q "failed" test_results.txt; then
+            echo "tests failed" >> log.txt
+          else
+            echo "tests succeeded" >> log.txt
+          fi
+
+      - name: Upload Updated Log File
+        uses: actions/upload-artifact@v4
+        with:
+          name: logfile
+          path: log.txt
+
   query:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Download Log File
+        uses: actions/download-artifact@v4
+        with:
+          name: logfile
+          path: .
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -189,3 +215,9 @@ jobs:
 
       - name: Shut down Docker Compose
         run: docker-compose down
+        
+      - name: Upload Final Log File
+        uses: actions/upload-artifact@v4
+        with:
+          name: logfile
+          path: log.txt
