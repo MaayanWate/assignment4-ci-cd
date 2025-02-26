@@ -94,7 +94,7 @@ jobs:
         run: sleep 10
 
       - name: Run tests
-        run: pytest -v Project_Part_4/tests/assn4_tests.py >> assn4_test_results.txt || true
+        run: pytest -v tests/assn4_tests.py >> assn4_test_results.txt || true
 
       - name: Upload test results
         if: always()
