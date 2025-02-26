@@ -76,6 +76,21 @@ jobs:
       - name: Start application
         run: docker-compose up -d
 
+      - name: Wait for MongoDB to be ready
+        run: |
+          echo "Waiting for MongoDB to be available..."
+          count=0
+          until nc -z localhost 27017; do
+            echo "Still waiting... Attempt $count"
+            count=$((count+1))
+            sleep 5
+            if [ $count -eq 30 ]; then
+              echo "MongoDB failed to start"
+              exit 1
+            fi
+          done
+          echo "MongoDB is ready!"
+
       - name: Log Container Start Status
         run: |
           if docker ps | grep -q "stocks" && docker ps | grep -q "capital-gains"; then
