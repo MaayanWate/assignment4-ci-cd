@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   stocks1:
@@ -32,7 +31,7 @@ services:
     expose:
       - 8080
     environment:
-      - STOCKS_URL=http://stocks1:8000
+      - STOCKS_URL=http://stocks1:5001
     restart: always
 
 volumes:
