@@ -59,6 +59,11 @@ def manage_stocks():
         if not all(k in data for k in ('symbol', 'purchase price', 'shares')):
             print("Malformed data received")
             return jsonify({"error": "Malformed data"}), 400
+        
+        # Validate date format (must be YYYY-MM-DD)
+        purchase_date = data.get("purchase date", datetime.today().strftime("%Y-%m-%d"))
+        if not is_valid_date(purchase_date):
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
         # Check if stock already exists in the current portfolio
         existing_stock = stocks_collection.find_one({"symbol": data['symbol']})
@@ -72,7 +77,7 @@ def manage_stocks():
             'name': data.get('name', 'NA'),
             'symbol': data['symbol'],
             'purchase price': round(data['purchase price'], 2),
-            'purchase date': data.get('purchase date', 'NA'),
+            'purchase date': purchase_date,
             'shares': int(data['shares']),
         }
         stocks_collection.insert_one(stock)
@@ -95,11 +100,17 @@ def manage_stock_by_id(id):
         stock = stocks_collection.find_one({"id": id})
         if not stock:
             return jsonify({"error": "Not found"}), 404
+        
+        # Validate date format if provided (must be YYYY-MM-DD)
+        purchase_date = data.get("purchase date", stock["purchase date"])
+        if not is_valid_date(purchase_date):
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        
         update_data = {
             "name": data.get("name", stock["name"]),
             "symbol": data.get("symbol", stock["symbol"]).upper(),
             "purchase price": round(float(data.get("purchase price", stock["purchase price"])), 2),
-            "purchase date": data.get("purchase date", stock["purchase date"]),
+            "purchase date": purchase_date,
             "shares": int(data.get("shares", stock["shares"]))
         }
         stocks_collection.update_one({"id": id}, {"$set": update_data})
