@@ -17,6 +17,13 @@ stocks_collection = db['stocks']  # Collection name
 # Read the API key from the environment variable
 API_KEY = os.getenv("NINJA_API_KEY")
 
+def is_valid_date(date_str):
+    try:
+        datetime.strptime(date_str, "%d-%m-%Y")
+        return True
+    except ValueError:
+        return False
+
 # Function to fetch stock price
 def get_stock_price(symbol):
     url = f"https://api.api-ninjas.com/v1/stockprice?ticker={symbol}"
@@ -54,6 +61,10 @@ def manage_stocks():
         if not all(k in data for k in ('symbol', 'purchase price', 'shares')):
             print("Malformed data received")
             return jsonify({"error": "Malformed data"}), 400
+        
+        # בדיקת פורמט תאריך DD-MM-YYYY
+        if not is_valid_date(data['purchase date']):
+            return jsonify({"error": "Invalid date format, must be DD-MM-YYYY"}), 40
 
         # Check if stock already exists in the current portfolio
         existing_stock = stocks_collection.find_one({"symbol": data['symbol']})
@@ -61,10 +72,6 @@ def manage_stocks():
             return jsonify({
                 "error": f"Stock with symbol '{data['symbol']}' already exists in portfolio."
             }), 400
-        
-        # Date Validity Check
-        if not is_valid_date(data['purchase date']):
-            return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
 
         stock = {
             'id': str(uuid.uuid4()),

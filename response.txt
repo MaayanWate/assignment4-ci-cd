@@ -1,5 +1,5 @@
 query: stocks:symbol=AAPL
-response: {"symbol":"AAPL","name":"Apple Inc.","purchase price":150.5,"purchase date":"2024-01-01","shares":10}
+response: {"symbol":"AAPL","name":"Apple Inc.","purchase price":150.5,"purchase date":"01-01-2024","shares":10}
 
 query: stocks:symbol=NVDA
 response: {"symbol":"NVDA","name":"NVIDIA Corporation","purchase price":134.66,"purchase date":"18-06-2024","shares":7}

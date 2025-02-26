@@ -12,7 +12,7 @@ stock_alpha = {
     "name": "Tesla, Inc.",
     "symbol": "TSLA",
     "purchase price": 650.00,
-    "purchase date": "2024-05-20",
+    "purchase date": "20-05-2024",
     "shares": 12
 }
 
@@ -20,7 +20,7 @@ stock_beta = {
     "name": "Microsoft Corporation",
     "symbol": "MSFT",
     "purchase price": 210.50,
-    "purchase date": "2024-03-15",
+    "purchase date": "15-03-2024",
     "shares": 15
 }
 
@@ -28,7 +28,7 @@ stock_gamma = {
     "name": "Amazon.com, Inc.",
     "symbol": "AMZN",
     "purchase price": 3200.99,
-    "purchase date": "2024-04-10",
+    "purchase date": "04-10-2024",
     "shares": 5
 }
 
@@ -36,7 +36,7 @@ stock_gamma = {
 stock_delta = {
     "name": "Meta Platforms, Inc.",
     "purchase price": 280.50,
-    "purchase date": "2024-06-01",
+    "purchase date": "06-01-2024",
     "shares": 8
 }
 
