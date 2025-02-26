@@ -4,6 +4,7 @@ import os
 import requests
 import uuid
 from pymongo import MongoClient
+import re
 
 app = Flask(__name__)
 
@@ -16,6 +17,10 @@ stocks_collection = db['stocks']  # Collection name
 
 # Read the API key from the environment variable
 API_KEY = os.getenv("NINJA_API_KEY")
+
+def is_valid_date(date_str):
+    """ Validates if the date format is correct (YYYY-MM-DD) """
+    return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str))
 
 # Function to fetch stock price
 def get_stock_price(symbol):
@@ -133,7 +138,7 @@ def portfolio_value():
             return jsonify({"server error": f"Unable to fetch stock price for {stock['symbol']}"}), 500
         stock_value = price * stock["shares"]
         total_value += stock_value
-    current_date = datetime.now().strftime("%d-%m-%Y")
+    current_date = datetime.now().strftime("%Y-%m-%d")
     return jsonify({
         "date": current_date,
         "portfolio value": round(total_value, 2)
