@@ -77,7 +77,7 @@ def manage_stocks():
             'name': data.get('name', 'NA'),
             'symbol': data['symbol'],
             'purchase price': round(data['purchase price'], 2),
-            'purchase date': datetime.strptime(data['purchase date'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+            'purchase date': datetime.strptime(data['purchasדe date'], "%d-%m-%Y").strftime("%d-%m-%Y"),
             'shares': int(data['shares']),
         }
         stocks_collection.insert_one(stock)
