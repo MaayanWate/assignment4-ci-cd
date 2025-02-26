@@ -230,7 +230,7 @@ jobs:
       - name: Upload query results
         uses: actions/upload-artifact@v4
         with:
-          name: query-results
+          name: response.txt
           path: response.txt
 
       - name: Shut down Docker Compose
