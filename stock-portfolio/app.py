@@ -45,44 +45,32 @@ def get_stock_price(symbol):
 def home():
     return f"Welcome to the {SERVICE_NAME} Stock Portfolio Manager!"
 
-# Managing stocks (GET and POST)
-@app.route('/stocks', methods=['GET', 'POST'])
+@app.route('/stocks', methods=['POST', 'GET'])
 def manage_stocks():
-    if request.method == 'GET':
-        symbol_query = request.args.get('symbol')
-        query = {"symbol": symbol_query} if symbol_query else {}
-        stocks = stocks_collection.find(query, {"_id": 0})
-        return jsonify(list(stocks)), 200
-
-    elif request.method == 'POST':
-        print(f"Received data: {request.json}")
-
+    if request.method == 'POST':
+        if not request.is_json:
+            abort(415)
         data = request.json
-        if not all(k in data for k in ('symbol', 'purchase price', 'shares')):
-            print("Malformed data received")
-            return jsonify({"error": "Malformed data"}), 400
         
-        # בדיקת פורמט תאריך DD-MM-YYYY
+        if not all(k in data for k in ('symbol', 'purchase price', 'shares')):
+            abort(400, description="Malformed data")
+        
         if not is_valid_date(data['purchase date']):
-            return jsonify({"error": "Invalid date format, must be DD-MM-YYYY"}), 40
-
-        # Check if stock already exists in the current portfolio
+            abort(400, description="Invalid date format, must be DD-MM-YYYY")
+        
         existing_stock = stocks_collection.find_one({"symbol": data['symbol']})
         if existing_stock:
-            return jsonify({
-                "error": f"Stock with symbol '{data['symbol']}' already exists in portfolio."
-            }), 400
-
+            abort(400, description=f"Stock with symbol '{data['symbol']}' already exists in portfolio.")
+        
         stock = {
             'id': str(uuid.uuid4()),
             'name': data.get('name', 'NA'),
             'symbol': data['symbol'],
             'purchase price': round(data['purchase price'], 2),
-            'purchase date': data.get('purchase date', 'NA'),
+            'purchase date': data['purchase date'],
             'shares': int(data['shares']),
         }
         stocks_collection.insert_one(stock)
-        print(f"Added stock: {stock}")
         return jsonify({'id': stock['id']}), 201
 
 # Managing a stock by ID (GET, PUT, DELETE)
