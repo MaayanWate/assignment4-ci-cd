@@ -61,6 +61,10 @@ def manage_stocks():
             return jsonify({
                 "error": f"Stock with symbol '{data['symbol']}' already exists in portfolio."
             }), 400
+        
+        # Date Validity Check
+        if not is_valid_date(data['purchase date']):
+            return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
 
         stock = {
             'id': str(uuid.uuid4()),
