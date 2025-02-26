@@ -79,22 +79,42 @@ jobs:
       - name: Log Container Start Status
         run: |
           if docker ps | grep -q "stocks" && docker ps | grep -q "capital-gains"; then
-            echo "Container up and running" >> log.txt
+            echo "✅ Containers are up and running!" >> log.txt
           else
-            echo "Container failed to run" >> log.txt
+            echo "❌ ERROR: Containers failed to start!" >> log.txt
+            docker ps -a
+            exit 1
           fi
 
       - name: Debug - Check running containers
         run: docker ps -a
 
       - name: Debug - Show logs for stocks1
-        run: docker logs stocks1 || echo "stocks1 container is not running"
+        run: docker logs stocks1 || echo "⚠️ stocks1 container is not running"
+
+      - name: Debug - Show logs for capital-gains
+        run: docker logs capital-gains || echo "⚠️ capital-gains container is not running"
 
       - name: Wait for services to be ready
         run: sleep 10
 
+      - name: Install Python and pytest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest requests
+
+      - name: Debug - Check files before running tests
+        run: ls -l
+
       - name: Run tests
-        run: pytest -v --rootdir=. tests/assn4_tests.py >> assn4_test_results.txt || true
+        run: python3 -m pytest -v tests/assn4_tests.py 2>&1 | tee assn4_test_results.txt
+
+      - name: Debug - Show test results file after tests
+        run: |
+          ls -l assn4_test_results.txt
+          cat assn4_test_results.txt || echo "⚠️ WARNING: assn4_test_results.txt is empty"
 
       - name: Upload test results
         if: always()
@@ -109,9 +129,9 @@ jobs:
       - name: Append Test Results to Log
         run: |
           if grep -q "failed" assn4_test_results.txt; then
-            echo "tests failed" >> log.txt
+            echo "❌ Tests failed!" >> log.txt
           else
-            echo "tests succeeded" >> log.txt
+            echo "✅ All tests passed!" >> log.txt
           fi
 
       - name: Upload Final Log File
