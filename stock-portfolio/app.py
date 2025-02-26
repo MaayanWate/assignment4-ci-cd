@@ -62,8 +62,7 @@ def manage_stocks():
             print("Malformed data received")
             return jsonify({"error": "Malformed data"}), 400
         
-        # בדיקת פורמט תאריך DD-MM-YYYY
-        if not is_valid_date(data['purchase date']):
+        if 'purchase date' not in data or not is_valid_date(data['purchase date']):
             return jsonify({"error": "Invalid date format, must be DD-MM-YYYY"}), 400
 
         # Check if stock already exists in the current portfolio
@@ -78,7 +77,7 @@ def manage_stocks():
             'name': data.get('name', 'NA'),
             'symbol': data['symbol'],
             'purchase price': round(data['purchase price'], 2),
-            'purchase date': data.get('purchase date', 'NA'),
+            'purchase date': datetime.strptime(data['purchase date'], "%d-%m-%Y").strftime("%d-%m-%Y"),
             'shares': int(data['shares']),
         }
         stocks_collection.insert_one(stock)
