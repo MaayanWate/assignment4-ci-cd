@@ -79,9 +79,9 @@ jobs:
       - name: Log Container Start Status
         run: |
           if docker ps | grep -q "stocks" && docker ps | grep -q "capital-gains"; then
-            echo "✅ Containers are up and running!" >> log.txt
+            echo "Container up and running" >> log.txt
           else
-            echo "❌ ERROR: Containers failed to start!" >> log.txt
+            echo "ERROR: Containers failed to start!" >> log.txt
             docker ps -a
             exit 1
           fi
@@ -129,9 +129,9 @@ jobs:
       - name: Append Test Results to Log
         run: |
           if grep -q "failed" assn4_test_results.txt; then
-            echo "❌ Tests failed!" >> log.txt
+            echo "tests failed" >> log.txt
           else
-            echo "✅ All tests passed!" >> log.txt
+            echo "tests succeeded" >> log.txt
           fi
 
       - name: Upload Final Log File
@@ -196,9 +196,12 @@ jobs:
       - name: Add 6 stock entries before queries
         run: |
           stocks=(
-            '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}'
-            '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}'
-            '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}'
+            '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"2024-06-18","shares":7}'
+            '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"2024-02-22","shares":19}'
+            '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"2024-10-24","shares":14}'
+            '{"name":"Tesla Inc.","symbol":"TSLA","purchase price":250.75,"purchase date":"2024-01-01","shares":5}'
+            '{"name":"Microsoft Corp.","symbol":"MSFT","purchase price":299.99,"purchase date":"2024-05-15","shares":8}'
+            '{"name":"Amazon.com Inc.","symbol":"AMZN","purchase price":320.45,"purchase date":"2024-03-12","shares":12}'
           )
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
