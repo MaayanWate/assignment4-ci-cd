@@ -199,9 +199,6 @@ jobs:
             '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"18-06-2024","shares":7}'
             '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"22-02-2024","shares":19}'
             '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"24-10-2024","shares":14}'
-            '{"name":"Tesla Inc.","symbol":"TSLA","purchase price":250.50,"purchase date":"01-03-2024","shares":5}'
-            '{"name":"Amazon.com Inc.","symbol":"AMZN","purchase price":3200.99,"purchase date":"10-05-2024","shares":8}'
-            '{"name":"Meta Platforms Inc.","symbol":"META","purchase price":280.75,"purchase date":"15-07-2024","shares":12}'
           )
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
