@@ -21,6 +21,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    restart: always
 
   capital-gains:
     build:
@@ -31,7 +32,10 @@ services:
     expose:
       - 8080
     environment:
-      - STOCKS_URL=http://stocks1:5001
+      - STOCKS_URL=http://stocks1:8000
+      - MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - stocks1
     restart: always
 
 volumes:
