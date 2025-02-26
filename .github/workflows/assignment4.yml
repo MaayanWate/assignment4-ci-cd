@@ -144,7 +144,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
       
       - name: Download Final Log File
@@ -163,7 +163,7 @@ jobs:
           docker --version
           docker-compose --version
 
-      - name: Start application
+      - name: Start Application with Docker Compose
         run: docker-compose up -d
 
       - name: Debug - Check running containers
@@ -172,36 +172,21 @@ jobs:
       - name: Debug - Show logs for stocks1
         run: docker logs stocks1 || echo "stocks1 container is not running"
 
-      - name: Wait for Stocks Service to be Ready
-        run: |
-          echo "Waiting for stocks service to be available..."
-          count=0
-          until curl -s "http://localhost:5001/stocks" > /dev/null; do
-            echo "Still waiting... Attempt $count"
-            count=$((count+1))
-            sleep 5
-            if [ $count -eq 30 ]; then
-              echo "Stocks service failed to start"
-              exit 1
-            fi
-          done
-          echo "Stocks service is ready!"
+      - name: Wait for Services to Start
+        run: sleep 10
 
-      - name: Ensure query.txt exists
-        run: touch query.txt
+      - name: Ensure response.txt Exists
+        run: touch response.txt
 
-      - name: Ensure response.txt exists
-        run: rm -f response.txt && touch response.txt
-
-      - name: Add 6 stock entries before queries
+      - name: Post Stocks 1-6
         run: |
           stocks=(
             '{"name":"NVIDIA Corporation","symbol":"NVDA","purchase price":134.66,"purchase date":"2024-06-18","shares":7}'
             '{"name":"Apple Inc.","symbol":"AAPL","purchase price":183.63,"purchase date":"2024-02-22","shares":19}'
             '{"name":"Alphabet Inc.","symbol":"GOOG","purchase price":140.12,"purchase date":"2024-10-24","shares":14}'
-            '{"name":"Tesla Inc.","symbol":"TSLA","purchase price":250.75,"purchase date":"2024-01-01","shares":5}'
-            '{"name":"Microsoft Corp.","symbol":"MSFT","purchase price":299.99,"purchase date":"2024-05-15","shares":8}'
-            '{"name":"Amazon.com Inc.","symbol":"AMZN","purchase price":320.45,"purchase date":"2024-03-12","shares":12}'
+            '{"name":"Tesla, Inc.","symbol":"TSLA","purchase price":194.58,"purchase date":"2022-11-28","shares":32}'
+            '{"name":"Microsoft Corporation","symbol":"MSFT","purchase price":420.55,"purchase date":"2024-02-09","shares":35}'
+            '{"name":"Intel Corporation","symbol":"INTC","purchase price":19.15,"purchase date":"2025-01-13","shares":10}'
           )
           for stock in "${stocks[@]}"; do
             echo "Posting: $stock"
@@ -210,27 +195,27 @@ jobs:
             sleep 1
           done
 
-
-      - name: Execute queries from query.txt
+      - name: Execute Queries from query.txt
         run: |
+          touch response.txt
           while IFS= read -r line; do
-            service=$(echo "$line" | cut -d':' -f1)
-            query=$(echo "$line" | cut -d':' -f2-)
-            if [ "$service" = "stocks" ]; then
-              response=$(curl -s "http://localhost:5001/stocks?$query")
-            elif [ "$service" = "capital-gains" ]; then
-              response=$(curl -s "http://localhost:5003/capital-gains?$query")
-            else
-              response="Invalid service name"
+            SERVICE=$(echo "$line" | cut -d':' -f1)
+            QUERY=$(echo "$line" | cut -d':' -f2-)
+            echo "query: ${SERVICE}:${QUERY}" >> response.txt
+            echo "response:" >> response.txt
+            if [[ "$SERVICE" == "stocks" ]]; then
+              curl -s "http://localhost:5001/stocks?$QUERY" >> response.txt
+            elif [[ "$SERVICE" == "capital-gains" ]]; then
+              curl -s "http://localhost:5003/capital-gains?$QUERY" >> response.txt
             fi
-            echo "query: $line" >> response.txt
-            echo "response: $response" >> response.txt
+            echo "" >> response.txt
           done < query.txt
 
-      - name: Upload query results
+      - name: Upload Query Responses
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: query-results
+          name: query_responses
           path: response.txt
 
       - name: Shut down Docker Compose
