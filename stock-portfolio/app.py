@@ -64,7 +64,7 @@ def manage_stocks():
         
         # בדיקת פורמט תאריך DD-MM-YYYY
         if not is_valid_date(data['purchase date']):
-            return jsonify({"error": "Invalid date format, must be DD-MM-YYYY"}), 40
+            return jsonify({"error": "Invalid date format, must be DD-MM-YYYY"}), 400
 
         # Check if stock already exists in the current portfolio
         existing_stock = stocks_collection.find_one({"symbol": data['symbol']})
