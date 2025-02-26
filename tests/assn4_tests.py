@@ -11,32 +11,32 @@ CAPITAL_GAINS_BASE_URL = "http://localhost:5003"
 stock_alpha = {
     "name": "Tesla, Inc.",
     "symbol": "TSLA",
-    "purchase_price": 650.00,
-    "purchase_date": "2024-05-20",
+    "purchase price": 650.00,
+    "purchase date": "2024-05-20",
     "shares": 12
 }
 
 stock_beta = {
     "name": "Microsoft Corporation",
     "symbol": "MSFT",
-    "purchase_price": 210.50,
-    "purchase_date": "2024-03-15",
+    "purchase price": 210.50,
+    "purchase date": "2024-03-15",
     "shares": 15
 }
 
 stock_gamma = {
     "name": "Amazon.com, Inc.",
     "symbol": "AMZN",
-    "purchase_price": 3200.99,
-    "purchase_date": "2024-04-10",
+    "purchase price": 3200.99,
+    "purchase date": "2024-04-10",
     "shares": 5
 }
 
 # For testing missing required field "symbol"
 stock_delta = {
     "name": "Meta Platforms, Inc.",
-    "purchase_price": 280.50,
-    "purchase_date": "2024-06-01",
+    "purchase price": 280.50,
+    "purchase date": "2024-06-01",
     "shares": 8
 }
 
@@ -44,8 +44,8 @@ stock_delta = {
 stock_epsilon = {
     "name": "Intel Corporation",
     "symbol": "INTC",
-    "purchase_price": 54.75,
-    "purchase_date": "06/01/2024",  # Incorrect format
+    "purchase price": 54.75,
+    "purchase date": "06/01/2024",  # Incorrect format
     "shares": 20
 }
 
