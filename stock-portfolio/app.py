@@ -54,8 +54,8 @@ def manage_stocks():
 
     elif request.method == 'POST':
         print(f"Received data: {request.json}")
-
         data = request.json
+    
         if not all(k in data for k in ('symbol', 'purchase price', 'shares')):
             print("Malformed data received")
             return jsonify({"error": "Malformed data"}), 400
@@ -64,6 +64,23 @@ def manage_stocks():
         purchase_date = data.get("purchase date", datetime.today().strftime("%Y-%m-%d"))
         if not is_valid_date(purchase_date):
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        
+        if 'symbol' not in data or not isinstance(data['symbol'], str) or not data['symbol'].strip():
+            return jsonify({"error": "Missing or invalid 'symbol' field"}), 400
+        
+        try:
+            purchase_price = float(data['purchase price'])
+            if purchase_price <= 0:
+                return jsonify({"error": "Purchase price must be a positive number"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid purchase price format"}), 400
+
+        try:
+            shares = int(data['shares'])
+            if shares <= 0:
+                return jsonify({"error": "Shares must be a positive integer"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid shares format"}), 400
 
         # Check if stock already exists in the current portfolio
         existing_stock = stocks_collection.find_one({"symbol": data['symbol']})
