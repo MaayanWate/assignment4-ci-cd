@@ -198,7 +198,7 @@
 #     response = requests.post(f"{STOCKS_BASE_URL}/stocks", json=stock8)
 #     assert response.status_code == 400, f"Adding stock with invalid date should fail - {response.json()}"
 
-Tester code
+# Tester code
 
 import requests
 import pytest
