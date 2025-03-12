@@ -1,5 +1,5 @@
 # Use a basic Python image
-# FROM python:3.9-slim
+FROM python:3.9-slim
 
 # Create a working directory inside the container where commands will run
 WORKDIR /app
