@@ -130,7 +130,7 @@ def test_get_all_stocks():
     """
     response = requests.get(f"{STOCKS_BASE_URL}/stocks")
     assert response.status_code == 200
-    assert len(response.json()) == , f"Expected exactly 3 stocks, found {len(response.json())}"
+    assert len(response.json()) ==3 , f"Expected exactly 3 stocks, found {len(response.json())}"
 
 def test_get_stock_values(test_data):
     """
